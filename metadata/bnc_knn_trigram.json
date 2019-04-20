@@ -1,0 +1,12 @@
+{
+	"modelId": "",
+	"type":"SRILM",
+	"dataSource":"BNC",
+	"modelHash": "UNKNOWN",
+	"dataSourceHash": "UNKNOWN",
+	"sos":"included",
+	"eos":"included",
+	"implements":"TBA",	
+	"comments":"",
+	"modelParameters":{"smoothing":"kn3+"}
+}

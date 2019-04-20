@@ -45,6 +45,12 @@ class SRILM_Model():
 		raise NotImplementedError
 
 
+	def generateText(self, input, base, normalize):
+
+		# operation on self.getSurprisal()
+		raise NotImplementedError
+
+
 	def train(self, metadata):
 		# model-specific training logic using information in the metadata object
 		raise NotImplementedError #DTROTFO		
