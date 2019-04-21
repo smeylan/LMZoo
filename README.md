@@ -32,7 +32,7 @@ These components are described in greater detail below.
 
 # LMZoo Self-Serve
 
-- Python library run locally that places tasks on the appropriate Celery queues
+- Python module with maximal abstraction. This is the `lmz` module in `utt_measures = lmz.query(utterances, models='*', measures='*')`. Serve can call this
 
 
 # LMZoo Queue 
@@ -101,8 +101,19 @@ Queryable set of model parameters.
 - Billion-Word Benchmark
 - Reddit web text
 
+*Note*: Availability of datasets * models should be described in a table, with some elements missing for copyright, compute, etc.
+
+# Installation
+
+- Install Redis if necessary, start a server
+- Install AMPQ if necessary, and start
+- Make a virtualenv with Python 3.5+ in the root and install requirements there
+- For each model, make a virtualenv with the appropriate Python version and install the specific requirements file and all dependencies specified in the metadata
+- Run the hello world:`client_example.py`
+
+
 # Runway
-- [ ] Test whether the celery queue system works
-- [ ] how to report progress from Celery before returning the final data
+- [x] Test whether the celery queue system works -- Yes as of 4/21
+- [ ] how to report progress from Celery before returning the final data? 
 - [ ] How to deploy this as an appliance: get a local version running in Griffiths lab, etc.
 - [ ] Relatedly, figure out how to hangle dependencies like SRILM (C++)  --  docker?
