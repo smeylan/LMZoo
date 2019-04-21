@@ -11,4 +11,5 @@ utterances = [
 	'The horse raced past the barn fell .'
 ]
 
-LMZ.query(utterances, modelIds="*", measures="*")
+result = LMZ.query(utterances, modelIds="*", measures="*")
+print(result)

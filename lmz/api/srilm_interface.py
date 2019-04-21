@@ -1,13 +1,13 @@
-#!/usr/bin/python3
-
 ''' Query and training methods for SRILM models'''
 
 import json
-import srilm
+from srilm import LM
 import math
 import pandas as pd
 import numpy as np
 import lmz.utils
+import os
+import time
 
 class srilm_model():
 
@@ -32,27 +32,57 @@ class srilm_model():
 			self.model = self.load(modelId)
 
 	def load(self, modelId):		
-		path = os.path.join('data',modelId)
-		return(srilm.LM(path))
+		t1 = time.time()
+		print('Loading model for '+modelId+'...')
+		path = os.path.join('data',modelId+'.LM')
+		loaded_model = LM(path, lower=True)
+		print('Finished loading model '+modelId+' in '+str(round(time.time() - t1))+' seconds')
+		return(loaded_model)
 
+	def query_model(self, input_dict_list, measures, base=2):
+		print('Query called in srilm_model')
 
-	def getSurprisal(self, input, base):		
+		# logic for calling multiple measures on the same model goes here
+
+		rdf = self.getSurprisal(input_dict_list, base)
+		rlist = rdf.to_dict('records')
+		# returns a dataframe
+		return(rlist) # need to be a list for serialization
+
+	def getSurprisal(self, input_dict_list, base, verbose=False):		
 		
 		#!!! use self.metadata to query different model types, e.g. no eos or sos
 		all_utterances = []
-		for input_row in input.to_dict('values'):
+		for input_row in input_dict_list:
 
-			utterance = np.array(['<s>']+ input_row['utterance'].strip().split(' ') + ['</s>'])
+			utterance = np.array(['<s>']+ [x.lower() for x in input_row['utterance'].strip().split(' ')] + ['</s>'])
 
 			word_probs = []            
-			for i in range(1,len(utterance)):
+			for i in range(0,len(utterance)):				
 				context = utterance[0:i][::-1]
-			prob = self.lm.logprob_strings(utterance[i], context)
-			word_probs.append({'word_index':i-1, 'word':utterance[i], 'log_prob':math.log(prob, base)})
+				if len(context) > 2:
+					context = context[0:2] #!!! soft code the max length of the context from the metadata
+
+				
+
+				srilm_output = self.model.logprob_strings(utterance[i], context)
+				if verbose:
+					print('utterance: '+utterance[i])
+					print('context: ')
+					print(context)
+					print(prob)
+				if not np.isinf(srilm_output): 
+					surprisal = -1. * math.log(10. ** srilm_output, base)
+				else:					
+					surprisal = None					
+				word_probs.append({'word_index':i-1, 'word':utterance[i], 'log_prob':surprisal})
+			
 			by_word_probs = pd.DataFrame(word_probs)
 			by_word_probs['id'] = input_row['id']
 			all_utterances.append(by_word_probs)
 
+		# returns a dataframe
+		print('X Computed all surprisal estimates.')
 		return(pd.concat(all_utterances))
 
 

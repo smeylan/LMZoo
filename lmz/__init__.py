@@ -1,10 +1,8 @@
-#!/usr/bin/python3
-
 '''Manages a connection to a server or initiates a queue locally to process requests'''
 
-import pandas
 import urllib
 import lmz.lmz_queue
+import lmz.api
 
 class LM_Zoo():
 	
@@ -19,13 +17,14 @@ class LM_Zoo():
 		else:
 			self.mode = 'remote'
 			print('Directing requests to remote LMZoo server...')
-			raise NotImplementedError
+			raise NotImplementedError			
 
 			print('Checking for heartbeat...')
-			# check for a heartbeat with url
+			# check for a heartbeat with urllib on the remote machine
 
 	
-	def query(self, input, modelIds, measures): 
+	def query(self, inputListOrString, modelIds, measures): 
+		# input is dataframe or string
 
 		if self.mode == 'remote':			
 			raise NotImplementedError
@@ -33,5 +32,5 @@ class LM_Zoo():
 			# parse a Python object
 
 		elif self.mode == 'local': 
-			result = self.LM_Queue.query(input, modelIds, measures)
+			result = self.LM_Queue.query(inputListOrString, modelIds, measures)
 			return(result)

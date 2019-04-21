@@ -1,6 +1,7 @@
 {
-	"modelId": "",
-	"type":"SRILM",
+	"modelId": "bnc_knn_trigram",
+	"type":"srilm",
+	"env_name":"pysrilm",
 	"dataSource":"BNC",
 	"modelHash": "UNKNOWN",
 	"dataSourceHash": "UNKNOWN",
