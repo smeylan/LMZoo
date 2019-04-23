@@ -18,9 +18,9 @@ def initCeleryQueueSingletonWorker(modelId):
 	metadata = lmz.utils.readJSONfromFile(os.path.join('metadata',modelId+'.json'))
 	print(metadata)
 	venv_command = "source "+os.path.join('environments',metadata['env_name'],'bin','activate') # Can get the venv_command from the metadata specification
-	command = ' && '.join([venv_command, "celery --app=model_worker  worker -Q bnc_knn_trigram -c 1 -m 	bnc_knn_trigram"])
+	command = ' && '.join([venv_command, "celery --app=model_worker  worker -Q ", modelId," -c 1 -m ", modelId ])
 
-	#!!! probably also want to generate a unique ID that can later be pkilled rather than searching by the modelId
+	#!!! generate a unique ID for each worker that can later be pkilled rather than searching by the modelId with pkill -f
 
 	print('Starting worker with command:')
 	print(command)
@@ -43,9 +43,8 @@ def getFromCeleryQueueSingletonWorker(input_dict_list, modelId, measures):
 	# this starts a celery queue for this specific model
 	initCeleryQueueSingletonWorker(modelId)
 
-	# results are a list of dictionaries; build them back into a DF
+	# results from the Celery workers are a list of dictionaries; build them back into a DF
 	model_result_list = model_worker.query.apply_async([input_dict_list, measures], queue=modelId).get()
-	#!!! this is not waiting
 	model_result_df = pd.DataFrame(model_result_list)
 	
 	# add the model name for the measures in the DF, appropriate for merging 
@@ -98,12 +97,13 @@ class LM_Queue():
 			# serialize before sending into parallel
 			input_dict_list = inputDForString.to_dict('records')
 
-			#  Parallel wrapper blocks until we get all results all workers (synchronous) in celery
+			#  Parallel wrapper blocks until we get all results from the Celery workers inside the jobs
+			# returns a list of dataframes, one per model 		
 			celery_results = Parallel(n_jobs=self.num_cores)(
 				delayed(getFromCeleryQueueSingletonWorker)(input_dict_list, modelId, measures)  for modelId in modelIds)
 			print('Finished parallel stage, merging results...')
 
-			# returns a list of dataframes 		
+			
 			print('Merging results...')
 			merged_results = recursive_merge(celery_results, ['id'])
 			print('Finished merging results...')

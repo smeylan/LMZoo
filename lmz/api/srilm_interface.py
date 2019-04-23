@@ -18,7 +18,7 @@ class srilm_model():
 		if mode == 'train':
 			self.model = None 
 			
-			# !!! check the new model Id to make sure it doesn't exist yet if we are training a new one
+			# !!! check the new modelId to make sure it doesn't exist among the metadata collection
 
 			raise NotImplementedError
 			# self.train()
@@ -42,8 +42,7 @@ class srilm_model():
 	def query_model(self, input_dict_list, measures, base=2):
 		print('Query called in srilm_model')
 
-		# logic for calling multiple measures on the same model goes here
-
+		#!!! logic for calling multiple measures (*) on the same model goes here; checking against the metadata
 		rdf = self.getSurprisal(input_dict_list, base)
 		rlist = rdf.to_dict('records')
 		# returns a dataframe
@@ -61,10 +60,8 @@ class srilm_model():
 			for i in range(0,len(utterance)):				
 				context = utterance[0:i][::-1]
 				if len(context) > 2:
-					context = context[0:2] #!!! soft code the max length of the context from the metadata
-
-				
-
+					context = context[0:2] #!!! soft code the max length of the context; pull this from the model metadata
+			
 				srilm_output = self.model.logprob_strings(utterance[i], context)
 				if verbose:
 					print('utterance: '+utterance[i])
