@@ -54,6 +54,7 @@ def on_worker_init(**_):
 	exec(exec_string) # loads a model object, e.g. of class srilm
 
 	global lm	
+	# initialize a model in query mode
 	lm = eval('lmz.api.'+metadata['type']+'_interface.'+metadata['type']+'_model(modelId,"query")')
 
 @app.task

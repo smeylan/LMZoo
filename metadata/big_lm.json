@@ -1,0 +1,17 @@
+{
+	"modelId": "big_lm",
+	"type":"big_lm",
+	"env_name":"big_lm",
+	"dataSource":"1 Billion Word Benchmark",
+	"modelHash": "UNKNOWN",
+	"dataSourceHash": "UNKNOWN",
+	"eos":"</s>",
+	"bos":"<s>",
+	"implements":"TBA",	
+	"comments":"",
+	"modelParameters":{
+		"pbtxt_path":"/home/stephan/python/lm_1b/data/graph-2016-09-10.pbtxt",
+		"ckpt_path": "/home/stephan/python/lm_1b/data/ckpt-*",
+		"vocab_path": "/home/stephan/python/lm_1b/data/vocab-2016-09-10.txt"
+	}
+}

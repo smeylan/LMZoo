@@ -8,32 +8,38 @@ import glob
 import lmz.utils
 import subprocess
 from functools import reduce
+import numpy as np
+from termcolor import colored
 
 def bash_command(cmd):
     subprocess.Popen(['/bin/bash', '-c', cmd])
 
-def initCeleryQueueSingletonWorker(modelId):
-	print('Starting celery worker for model '+modelId)	
+def initCeleryQueueSingletonWorker(modelId, killExisting = True):
+	print(colored('Starting celery worker for model '+modelId, 'red'))
+
+	if killExisting:		
+		killCeleryQueueSingletonWorker(modelId)
 	
 	metadata = lmz.utils.readJSONfromFile(os.path.join('metadata',modelId+'.json'))
 	print(metadata)
 	venv_command = "source "+os.path.join('environments',metadata['env_name'],'bin','activate') # Can get the venv_command from the metadata specification
-	command = ' && '.join([venv_command, "celery --app=model_worker  worker -Q ", modelId," -c 1 -m ", modelId ])
+	command = ''.join([venv_command, " && celery --app=model_worker  worker -Q ", modelId," -c 1 -m ", modelId ])
 
 	#!!! generate a unique ID for each worker that can later be pkilled rather than searching by the modelId with pkill -f
 
 	print('Starting worker with command:')
 	print(command)
 	bash_command(command)
+	print(colored(modelId + ' started!', 'green'))
 
 def killCeleryQueueSingletonWorker(modelId):	
-	print('Stopping celery worker for model '+modelId)
+	print('Terminating celery worker for model '+modelId)
 	command = "pkill -9 -f '"+modelId+"'"
 	os.system(command)
 
 def addModelIdToColNames(columnNames, modelId):
 	'''rename columns except "id" with the format $modelId_$measure'''
-	return([modelId+'-'+x if x != 'id' else 'id' for x in columnNames])
+	return([modelId+'-'+x if x not in ('id','token_id','utterance_id') else x for x in columnNames])
 
 
 def getFromCeleryQueueSingletonWorker(input_dict_list, modelId, measures):
@@ -89,10 +95,13 @@ class LM_Queue():
 
 		elif type(inputListOrString) is list:
 
-			# change it to a dataframe
-			inputDForString = pd.DataFrame({'utterance':inputListOrString})
-			inputDForString['id'] = range(inputDForString.shape[0])
-			# this is a df with id and utterance (a string) for each record
+			# input: single utterance_id; single utterance_string, list of tokens in utterance_id, list of indexes in token_id
+			# token IDs are assigned here so that all models can use them
+			inputDForString = pd.DataFrame({'utterance_string':inputListOrString})
+			inputDForString['utterance_id'] = range(inputDForString.shape[0])
+			ul = [['<s>']+ y.strip().split(' ') + ['</s>'] for y in inputDForString.utterance_string]			
+			inputDForString['utterance_list'] = ul
+			inputDForString['token_id'] = [list(range(len(x))) for x in ul]			
 			
 			# serialize before sending into parallel
 			input_dict_list = inputDForString.to_dict('records')
@@ -104,7 +113,7 @@ class LM_Queue():
 			print('Finished parallel stage, merging results...')
 
 			
-			print('Merging results...')
-			merged_results = recursive_merge(celery_results, ['id'])
+			print('Merging results...')			
+			merged_results = recursive_merge(celery_results, ['utterance_id','token_id'])
 			print('Finished merging results...')
 			return(merged_results)

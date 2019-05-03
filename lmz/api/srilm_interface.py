@@ -50,13 +50,12 @@ class srilm_model():
 
 	def getSurprisal(self, input_dict_list, base, verbose=False):		
 		
-		#!!! use self.metadata to query different model types, e.g. no eos or sos
+		#!!! use self.metadata to query different model types, e.g. no eos or bos
 		all_utterances = []
 		for input_row in input_dict_list:
-
-			utterance = np.array(['<s>']+ [x.lower() for x in input_row['utterance'].strip().split(' ')] + ['</s>'])
-
-			word_probs = []            
+			
+			utterance = [x.lower() for x in input_row['utterance_list']] # preprocessed in lmz_queue
+			word_probs = []
 			for i in range(0,len(utterance)):				
 				context = utterance[0:i][::-1]
 				if len(context) > 2:
@@ -72,10 +71,10 @@ class srilm_model():
 					surprisal = -1. * math.log(10. ** srilm_output, base)
 				else:					
 					surprisal = None					
-				word_probs.append({'word_index':i-1, 'word':utterance[i], 'log_prob':surprisal})
+				word_probs.append({'token_id':i, 'word':utterance[i], 'log_prob':surprisal})
 			
 			by_word_probs = pd.DataFrame(word_probs)
-			by_word_probs['id'] = input_row['id']
+			by_word_probs['utterance_id'] = input_row['utterance_id']
 			all_utterances.append(by_word_probs)
 
 		# returns a dataframe
